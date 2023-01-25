@@ -1,0 +1,176 @@
+
+--1. Print names of the classrooms where the teacher "Edward Hop-
+--per" lectures.
+CREATE VIEW ShowLectureRoomName
+AS
+SELECT LR.[Name]
+FROM Teachers AS T
+INNER JOIN Lectures AS L
+ON T.[Id]=L.[TeacherId]
+INNER JOIN Schedules AS S
+ON L.[Id]=S.[LectureId]
+INNER JOIN LectureRooms AS LR
+ON LR.[Id]=S.[LectureRoomId]
+WHERE T.[Name]='Liza'
+
+SELECT * FROM ShowLectureRoomName
+
+
+--2. Print names of the assistants who deliver lectures for the group
+--"F505".
+
+CREATE VIEW ShowAssistantName
+AS
+SELECT T.[Name]
+FROM Groups AS G
+INNER JOIN GroupsLectures AS GL
+ON G.[Id]=GL.[GroupId]
+INNER JOIN Lectures AS L
+ON GL.[LectureId]=L.[Id]
+INNER JOIN Teachers AS T
+ON T.[Id]=L.[TeacherId]
+INNER JOIN Assistants AS A
+ON A.[TeacherId]=T.[Id]
+WHERE G.[Name]='Software Developer'
+
+SELECT * FROM ShowAssistantName
+
+
+--3. Print subjects taught by the teacher "Alex Carmack" for groups
+--of the 5th year.
+
+CREATE VIEW SubjectsTaught
+AS
+SELECT S.[Name]
+FROM Groups AS G
+INNER JOIN GroupsLectures AS GL
+ON GL.[GroupId]=G.[Id]
+INNER JOIN Lectures AS L
+ON L.[Id]=GL.[LectureId]
+INNER JOIN Teachers AS T
+ON T.[Id]=L.[TeacherId]
+INNER JOIN Subjects AS S
+ON S.[Id]=L.[SubjectId]
+WHERE G.[Year]=5
+
+SELECT * FROM SubjectsTaught
+
+--4 Print names of the teachers who do not deliver lectures on
+--Mondays.
+
+CREATE VIEW ShowLectureTeacherName
+AS
+SELECT T.[Name]
+FROM Schedules AS S
+INNER JOIN Lectures AS L
+ON L.[Id]=S.[LectureId]
+INNER JOIN Teachers AS T
+ON T.[Id]=L.[TeacherId]
+WHERE S.[DayOfWeek]!=1
+
+SELECT * FROM ShowLectureTeacherName
+
+
+--5. Print names of the classrooms, indicating their buildings, in
+--which there are no lectures on Wednesday of the second week
+--on the third double period.
+CREATE VIEW ShowLectureRoomNameBuilding
+AS
+SELECT LR.[Name], LR.[Building]
+FROM Schedules AS S
+INNER JOIN dbo.Lectures AS L
+ON L.Id = S.LectureId
+INNER JOIN LectureRooms AS LR
+ON LR.Id = S.LectureRoomId 
+WHERE S.[Week] % 4 = 2 AND S.[DayOfWeek] = 5 
+
+SELECT * FROM ShowLectureRoomNameBuilding
+
+
+--6. Print full names of teachers of the Computer Science faculty,
+--who do not supervise groups of the Software Development de-
+--partment.
+
+CREATE VIEW ShowComputerFacultyTeacherName
+AS
+SELECT T.[Name],T.[Surname]
+FROM Departments AS D
+INNER JOIN Faculties AS F
+ON F.[Id]=D.[FacultyId]
+INNER JOIN Deans AS DE
+ON DE.[Id]=F.[DeanId]
+INNER JOIN Teachers AS T
+ON T.[Id]=DE.[TeacherId]
+WHERE F.[Name]='Izio'
+
+SELECT * FROM ShowComputerFacultyTeacherName
+
+--7 Print numbers of all buildings that are available in the tables
+--of faculties, departments, and classrooms.
+
+CREATE VIEW ShowBuildingNumberr
+AS
+SELECT LR.[Name] AS LectureRoomName, LR.[Building] AS LectureRoomBuilding,
+		D.[Name] AS DeparmentName, D.[Building] AS DepartmentBuilding,
+		F.[Name] AS FacultyName, F.[Building] AS FacultyBuilding
+FROM dbo.LectureRooms AS LR
+INNER JOIN dbo.Schedules AS S
+ON S.LectureRoomId = LR.Id
+INNER JOIN dbo.Lectures AS L
+ON L.Id = S.LectureId
+INNER JOIN dbo.GroupsLectures AS GL
+ON GL.LectureId = L.Id
+INNER JOIN dbo.Groups AS G
+ON G.Id = GL.GroupId
+INNER JOIN dbo.Departments AS D
+ON D.Id=G.DepartmentId
+INNER JOIN dbo.Faculties AS F
+ON F.Id=D.FacultyId
+
+SELECT * FROM ShowBuildingNumberr
+
+
+--8 Print full names of teachers in the following order: deans of
+--faculties, heads of departments, teachers, curators, assistants.
+
+CREATE VIEW ShowAllTeacherName
+WITH SCHEMABINDING
+AS
+SELECT T.[Name] + ' ' + T.[Surname] AS TeacherFullName 
+FROM dbo.Faculties AS F
+INNER JOIN dbo.Deans AS D
+ON F.DeanId=D.Id
+INNER JOIN dbo.Teachers AS T
+ON T.Id=D.TeacherId
+INNER JOIN dbo.Heads AS H
+ON H.TeacherId=T.Id
+INNER JOIN dbo.Departments AS DP
+ON DP.HeadId = H.Id
+INNER JOIN dbo.Curators AS C
+ON T.Id = C.TeacherId
+INNER JOIN dbo.Assistants AS A
+ON A.TeacherId= T.Id
+
+SELECT * FROM ShowAllTeacherName
+
+-- 9. Print days of the week (without repetitions), in which there are
+--classes in the classrooms "A311" and "A104" of the building 6.
+
+CREATE VIEW ShowDayWithBinding
+WITH SCHEMABINDING
+AS 
+SELECT G.[Name] AS GroupName, S.[DayOfWeek] AS SchedulesDayOfWeek, 
+	   LR.[Building] AS LectureRoomBuilding
+FROM dbo.LectureRooms AS LR
+INNER JOIN dbo.Schedules AS S
+ON S.LectureRoomId =LR.Id
+INNER JOIN dbo.Lectures AS L
+ON L.Id=S.LectureId
+INNER JOIN dbo.GroupsLectures AS GL
+ON GL.LectureId=L.Id
+INNER JOIN dbo.Groups AS G
+ON G.Id = GL.GroupId
+WHERE LR.[Building] = 2 AND LR.[Name] ='Nobe Renoden' OR LR.[Name]='Moira Nizet'
+
+
+SELECT * FROM ShowDayWithBinding
